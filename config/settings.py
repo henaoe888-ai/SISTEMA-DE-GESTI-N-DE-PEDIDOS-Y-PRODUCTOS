@@ -30,7 +30,11 @@ SECRET_KEY = 'django-insecure-=3bpf*)%$gg4ispklys(xt_*=l3ut11ju#vs3c=pfrdn0%2ypv
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [  
+    "sistema-de-gesti-n-de-pedidos-y-productos.on render.com",
+    "localhost",
+    "127.0.0.1",
+]
 
 
 # Application definition
