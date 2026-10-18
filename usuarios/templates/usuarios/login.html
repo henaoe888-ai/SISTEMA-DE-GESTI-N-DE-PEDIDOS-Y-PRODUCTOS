@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de Sesión</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            min-height: 100%;
+            background: linear-gradient(160deg, #120a24 0%, #241046 100%);
+        }
+
+        body {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 16px;
+            font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+            color: #e8e2ff;
+            line-height: 1.5;
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00f0ff;
+            letter-spacing: 0.02em;
+            text-shadow: 0 0 18px rgba(0, 240, 255, 0.45);
+        }
+
+        .error {
+            margin: 0 0 16px;
+            padding: 10px 16px;
+            font-size: 0.95rem;
+            color: #ff8fa3;
+            background: rgba(255, 77, 109, 0.12);
+            border: 1px solid rgba(255, 77, 109, 0.5);
+            border-left: 4px solid #ff4d6d;
+            border-radius: 10px;
+        }
+
+        form p {
+            margin: 0 0 10px;
+            padding: 10px 16px;
+            background: #1c1238;
+            border: 1px solid #3a2766;
+            border-left: 4px solid #00f0ff;
+            border-radius: 10px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #00f0ff;
+            letter-spacing: 0.04em;
+        }
+
+        input {
+            display: block;
+            width: 100%;
+            margin-top: 6px;
+            padding: 10px 12px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: #ffffff;
+            background: #0b0618;
+            border: 1.5px solid #3a2766;
+            border-radius: 8px;
+            caret-color: #ff2e97;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #00f0ff;
+            box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.2);
+        }
+
+        .acciones {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        button {
+            padding: 11px 26px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: inherit;
+            color: #ffffff;
+            background: #ff2e97;
+            border: none;
+            border-radius: 999px;
+            box-shadow: 0 4px 16px rgba(255, 46, 151, 0.4);
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            background: #ff4fa9;
+            box-shadow: 0 6px 20px rgba(255, 46, 151, 0.55);
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        a {
+            display: inline-block;
+            padding: 9px 18px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #00f0ff;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            border-radius: 999px;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s, transform 0.1s;
+        }
+
+        a:hover {
+            background: #00f0ff;
+            color: #120a24;
+        }
+
+        a:active {
+            transform: scale(0.97);
+        }
+        
+
+        @media (max-width: 520px) {
+            body {
+                padding: 28px 14px;
+            }
+
+            h1 {
+                text-align: center;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Iniciar sesión</h1>
+
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <p>
+            <label>Usuario:</label><br>
+
+            <input type="text" name="username" required>
+        </p>
+
+        <p>
+            <label>Contraseña:</label><br>
+
+            <input type="password" name="password" required>
+        </p>
+
+        <button type="submit">
+            Entrar
+        </button>
+
+    </form>
+
+    <br>
+
+    <a href="/usuarios/registro/">
+        No tienes cuenta
+    </a>
+
+
+</body>
+
+</html>

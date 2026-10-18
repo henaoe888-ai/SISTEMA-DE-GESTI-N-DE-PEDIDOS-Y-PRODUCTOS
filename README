@@ -1,0 +1,1331 @@
+1. Crear un directorio,  dentro de este ejecutamos cmd para abrir la terminal de 
+el mismo directorio
+
+2.Ejecutamos los siguientes comandos
+
+-python -m venv venv (crear entorno virtual)
+-venv\scripts\activate (Activar el entorno virtual)
+-pip install django(instalamos django)
+-pip install [binary] dj-database-url python-dotenv(para instalar al conexión a neon)
+
+3. nos dirigimos a https://neon.tech/ y creamos una cuenta, luego creamos un proyecto 
+y copiamos la URL de conexión a la base de datos, pero antes de eso crear un archivo llamado .env en donde
+lo pegaremos y adicional antes de pegarlo ponemos DATABASE_URL=(link que nos dio neon)
+
+4.ahora ponemos en config/settings esto:
+
+arriba del todo:
+
+from pathlib import Path
+import os
+from dotenv import load_dotenv
+import dj_database_url
+
+
+despues ponemos esto:
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
+
+ahora lo que habia antes en donde estaba la data base borramos y pegamos esta:
+
+DATABASES = {
+    "default": dj_database_url.parse(
+        os.environ.get("DATABASE_URL")
+    )
+}
+
+5.Creamos nuestras aplicaciones y ejecutamos en la terminal
+con el siguientes comando:
+
+python manage.py startapp (nombre de la aplicacion)
+
+Ejemplo:
+
+python manage.py startapp pedidos
+
+(lo mismo se hizo tanto con productos y usuarios)
+
+6.Luego vamos a meter la aplicacion en INSTALLED_APPS de la siguiente manera:
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+
+    'productos',
+    'pedidos', <-Nuestra aplicacion registrada
+    'usuarios',
+]
+
+al registrar la aplicacion de pedidos en la configuracion podemos dar inicio
+a implementar todo el funcionamiento que hace el apartado de pedidos, como registrar pedidos,
+listas de pedidos registrados y demás(se hace tambien lo mismo para usuarios y productos)
+
+7.Se crean las views de cada aplicación estas nos permite ver lo que visualizara
+la persona al momento de estar en nuestra pagina:
+
+from django.shortcuts import render
+from .models import Pedido
+
+
+def crear(request):
+    if request.method == "POST":
+        pedidos = Pedido(
+            nombre = request.POST["nombre"],
+            valor = request.POST["valor"],
+            estado = request.POST["estado"],
+            descripcion = request.POST["descripcion"],
+            registro = request.POST["registro"]
+        )
+
+        pedidos.save()                                  {indico que todos los datos registardos en el formulario html que los recoga y lo 
+    return render(request, "pedidos/formulario.html")    guarde, aca se van a enviar a la base de datos, podemos verificar a tráves de neon}
+
+def listar(request):
+    pedidos = Pedido.objects.all() <-Nos esta diciendo muestra todos los productos registrados por la persona
+    return render(
+        request,
+        "pedidos/listar.html",
+        {"pedidos": pedidos}
+    ) <-esto a traves de listar, donde muestra todo lo que se ha registrado
+
+def detalle(request,id):
+    pedidos = Pedido.objects.get(id=id) <-Indica a que id se le esta viendo el detalle
+    return render(
+        request,
+        "pedidos/detalle.html",
+        {"pedidos":pedidos}
+    ) <-Aca se muestra la informacion de ese producto
+
+def editar(request,id):
+    pedidos = Pedido.objects.get(id=id) <- se le indica que tome el id Ej: el 1
+    
+    if request.method == "POST":
+        pedidos.nombre = request.POST["nombre"] <-toma los valores que hallan sido ingresados en el html
+        pedidos.valor = request.POST["valor"]
+        pedidos.estado = request.POST["estado"]
+        pedidos.descripcion = request.POST["descripcion"]
+        pedidos.registro = request.POST["registro"] == "True" <- Aca le indico que debe de ser un valor booleano( True or False)
+
+        pedidos.save() <-con este codigo lo que hacemos es guardar todos esos datos del html ingresados
+        return render(
+            request,
+            "pedidos/detalle.html",
+            {"pedidos":pedidos}
+        ) <-finalmente lo que hace envia la peticion a el navegador, luego le indica de que plantilla y finalmente se indica que recoga los datos de esa plantilla
+
+    return render(
+        request,
+        "pedidos/formulario.html",
+        {"pedidos":pedidos}
+    ) <- lo que se hace aqui esque si la persona edito el pedido, lo manda otra vez al formulario para poder editar
+
+def eliminar(request,id):
+    pedidos = Pedido.objects.get(id=id)
+    pedidos.delete()
+    return render(
+        request,
+        "pedidos/detalle.html",
+        {"pedidos":pedidos}
+    )
+
+8.paso vamos a crear la urls esto para que nos redireccione hacia donde vamos a crear/modificar/listar/o eliminar
+entonces:
+
+from django.urls import path
+from .import views
+
+urlpatterns = [
+    path("crear/",views.crear), <-Este es cada direccion url que nos manda a el metodo que implementamos desde ls views
+    path("listar/",views.listar), <-lo mismo con este
+    path("detalle/<int:id>/",views.detalle),<-lo mismo  con este solo que aca indicamos int(entero) el id, ya que si no nos lanzara error django no detecta el tipo de dato por si solo(ahi que especificarle)
+    path("editar/<int:id>/",views.editar), <-con este es lo mismo que el de arriba
+    path("eliminar/<int:id>/",views.eliminar), <-lo mismo con el de arriba
+]
+
+9.Vamos a crear el Modelo:
+
+from django.db import models
+
+
+class Pedido(models.Model): <-Cramos una clase Pedido, (models.Model)Permite a django reconocer a Pedido como un modelo de tabla
+    nombre = models.CharField() <-Creo las columnas de las tabla(la informacion que llevara la tabla Pedido, le indicamos tambien su tipo de dato)
+    valor = models.DecimalField() <-lo mismo pasa con esta
+    estado = models.CharField() <- lo mismo pasa con esta
+    descripcion = models.TextField(max_length=100) <- lo mismo pasa con esta
+    registro = models.CharField(max_length=20) <- lo mismo pasa con esta
+
+def __str__(self):
+    return self.nombre
+
+Ahora lo que hacemos es migrar, para que?
+
+debemos decirle a django de  crear nuestro modelo de la tabla y las columnas que se le van a poner,
+vamos a decirle a django que prepare todo con a tráves de instrucciones para eso ejecutamos:
+
+*python manage.py makemigrations (prepara para realizar la migraciones)
+
+*python manage.py migrate(ejecuta las migraciones y con eso ya creamos nuestra tabla, con las columnas asignadas)
+
+10.vamos agregar la url de nuestra aplicacion en config, para que nos de redirija a el apartado principal en donde,
+realizamos los pedios
+
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('pedidos/', include("pedidos.urls")), <-aqui son las urls, que redireccionan ya se para productos,usuarios o pedidos
+]
+
+11.Creamos los html necesarios,para nuestra aplicación y poner en funcionamiento los vistas y urls que creamos,ademas tambien poner en funcionamiento
+la conexión que hicimos con postgres y neon, para esto creamos una carpeta templates dentro de otra carpeta llamada pedidos dentro de esta carpeta,
+vamos poner los html(sugerible hacer los estilos css dentro de el html con la etiqueta style)
+
+================== PLANTILLA DE DETALLE PEDIDOS HTML ======================
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Gestión de Productos y Pedidos</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            min-height: 100%;
+            background: linear-gradient(160deg, 120a24 0%, 241046 100%);
+        }
+
+        body {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 16px;
+            font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+            color: e8e2ff;
+            line-height: 1.5;
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: 00f0ff;
+            letter-spacing: 0.02em;
+            text-shadow: 0 0 18px rgba(0, 240, 255, 0.45);
+        }
+
+        .tarjeta {
+            margin: 0 0 24px;
+            padding: 20px 24px;
+            background: 1c1238;
+            border: 1px solid 3a2766;
+            border-left: 4px solid ff2e97;
+            border-radius: 10px;
+        }
+
+        p {
+            margin: 0 0 12px;
+            font-size: 0.95rem;
+            color: c9c0ee;
+        }
+
+        p:last-child {
+            margin-bottom: 0;
+        }
+
+        strong {
+            display: block;
+            margin-bottom: 2px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: 00f0ff;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .acciones {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .acciones a {
+            margin: 0;
+        }
+
+        a {
+            display: inline-block;
+            margin: 4px 6px 4px 0;
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: ffffff;
+            background: ff2e97;
+            border-radius: 999px;
+            box-shadow: 0 4px 16px rgba(255, 46, 151, 0.4);
+            text-decoration: none;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+        }
+
+        a:hover {
+            background: ff4fa9;
+            box-shadow: 0 6px 20px rgba(255, 46, 151, 0.55);
+        }
+
+        a:active {
+            transform: scale(0.97);
+        }
+
+        a.volver {
+            color: 00f0ff;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            box-shadow: none;
+        }
+
+        a.volver:hover {
+            background: 00f0ff;
+            color: 120a24;
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 28px 14px;
+            }
+
+            h1 {
+                text-align: center;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Detalle de el Pedido</h1>
+
+<p>
+    <strong>Nombre del Pedido:</strong>
+    {{ pedidos.nombre }}
+</p>
+
+<p>
+    <strong>Valor:</strong>
+    {{ pedidos.valor }}
+</p>
+
+<p>
+    <strong>Estado:</strong>
+    {{ pedidos.estado }}
+</p>
+
+<p>
+    <strong>Descripción:</strong>
+    {{ pedidos.descripcion }}
+</p>
+
+<p>
+    <strong>Nombre del registrador:</strong>
+    {{ pedidos.registro }}
+</p>
+
+
+<br>
+
+<a href="/pedidos/editar/{{ pedidos.id }}/">
+    Editar
+</a>
+
+<br><br>
+
+<a href="/pedidos/listar/">
+    Volver
+</a>
+
+</body>
+
+</html>
+
+
+================ PLANTILLA FORMULARIO PEDIDOS HTML =====================
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Gestión de Productos y Pedidos</title>
+     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            min-height: 100%;
+            background: linear-gradient(160deg, 120a24 0%, 241046 100%);
+        }
+
+        body {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 16px;
+            font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+            color: e8e2ff;
+            line-height: 1.5;
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: 00f0ff;
+            letter-spacing: 0.02em;
+            text-shadow: 0 0 18px rgba(0, 240, 255, 0.45);
+        }
+
+        h2 {
+            margin: 0 0 16px;
+            padding: 10px 16px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: ffd23f;
+            background: 1c1238;
+            border-left: 4px solid ff2e97;
+            border-radius: 10px;
+        }
+
+        form p {
+            margin: 0 0 10px;
+            padding: 10px 16px;
+            background: 1c1238;
+            border: 1px solid 3a2766;
+            border-left: 4px solid 00f0ff;
+            border-radius: 10px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: 00f0ff;
+            letter-spacing: 0.04em;
+        }
+
+        input {
+            display: block;
+            width: 100%;
+            margin-top: 6px;
+            padding: 10px 12px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: ffffff;
+            background: 0b0618;
+            border: 1.5px solid 3a2766;
+            border-radius: 8px;
+            caret-color: ff2e97;
+        }
+
+        input::placeholder {
+            color: 6d5c99;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: 00f0ff;
+            box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.2);
+        }
+
+        .acciones {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        button {
+            padding: 11px 26px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: inherit;
+            color: ffffff;
+            background: ff2e97;
+            border: none;
+            border-radius: 999px;
+            box-shadow: 0 4px 16px rgba(255, 46, 151, 0.4);
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            background: ff4fa9;
+            box-shadow: 0 6px 20px rgba(255, 46, 151, 0.55);
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        a {
+            display: inline-block;
+            padding: 9px 18px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: 00f0ff;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            border-radius: 999px;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s, transform 0.1s;
+        }
+
+        a:hover {
+            background: 00f0ff;
+            color: 120a24;
+        }
+
+        a:active {
+            transform: scale(0.97);
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 28px 14px;
+            }
+
+            h1 {
+                text-align: center;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Gestión de Productos y Pedidos</h1>
+
+<h2>Registro de Pedidos</h2>
+
+<form method="POST">
+
+    {% csrf_token %}
+
+    <p>
+        <label>Nombre del pedido:</label><br>
+        <input
+            type="text"
+            name="nombre"
+            value="{{ pedidos.nombre|default:'' }}"
+            required
+        >
+    </p>
+
+    <p>
+        <label>Valor:</label><br>
+        <input
+            type="number"
+            name="valor"
+            value="{{ pedidos.valor|default:'' }}"
+            required
+        >
+    </p>
+
+    <p>
+        <label>Estado:</label><br>
+        <input
+            type="text"
+            name="estado"
+            value="{{ pedidos.estado|default:'' }}"
+            required
+        >
+    </p>
+
+    <p>
+        <label>Descripción:</label><br>
+        <input
+            type="text"
+            name="descripcion"
+            value="{{ pedidos.descripcion|default:'' }}"
+            required
+        >
+    </p>
+
+    <p>
+        <label>Nombre del registrador:</label><br>
+        <input
+            type="text"
+            name="registro"
+            value="{{ pedidos.registro|default:'' }}"
+            required
+        >
+    </p>
+
+    <button type="submit">
+        Guardar
+    </button>
+
+    <br><br>
+
+    <a href="/pedidos/listar/">
+        Ver pedidos
+
+    
+    
+
+
+    <a href="/pedidos/editar/{{ pedidos.id }}/">
+    Editar pedido 
+    </a>
+
+
+
+    
+    <br><br>
+
+</form>
+
+</body>
+
+============== PLANTILLA LISTAR PEDIDOS HTML =====================
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+     <title>Sistema de Gestión de Productos y Pedidos</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            min-height: 100%;
+            background: linear-gradient(160deg, 120a24 0%, 241046 100%);
+        }
+
+        body {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 16px;
+            font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+            color: e8e2ff;
+            line-height: 1.5;
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: 00f0ff;
+            letter-spacing: 0.02em;
+            text-shadow: 0 0 18px rgba(0, 240, 255, 0.45);
+        }
+
+        h3 {
+            margin: 0 0 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: ffd23f;
+        }
+
+        p {
+            margin: 0 0 8px;
+            font-size: 0.95rem;
+            color: c9c0ee;
+        }
+
+        hr {
+            margin: 24px 0;
+            border: none;
+            border-top: 1px solid 3a2766;
+        }
+
+        .tarjeta {
+            margin: 0 0 16px;
+            padding: 16px 20px;
+            background: 1c1238;
+            border: 1px solid 3a2766;
+            border-left: 4px solid ff2e97;
+            border-radius: 10px;
+        }
+
+        .acciones {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .acciones a {
+            margin: 0;
+        }
+
+        a {
+            display: inline-block;
+            margin: 8px 6px 4px 0;
+            padding: 7px 16px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: 00f0ff;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            border-radius: 999px;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s, transform 0.1s;
+        }
+
+        a:hover {
+            background: 00f0ff;
+            color: 120a24;
+        }
+
+        a:active {
+            transform: scale(0.97);
+        }
+
+        .crear {
+            color: ffffff;
+            background: ff2e97;
+            border: none;
+            padding: 10px 24px;
+            box-shadow: 0 4px 16px rgba(255, 46, 151, 0.4);
+        }
+
+        .crear:hover {
+            background: ff4fa9;
+            color: ffffff;
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 28px 14px;
+            }
+
+            h1 {
+                text-align: center;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Lista de pedidios registrados</h1>
+
+<a href="/pedidos/crear/">
+    Crear un nuevo Pedido
+</a>
+
+<a href="/productos/crear/">
+    Ir a Productos
+</a>
+
+<a href="/usuarios/cerrar_sesion/">
+    Cerrar Sesión
+</a>
+
+<hr>
+
+{% for pedido in pedidos %}
+
+    <h3>Nombre: {{ pedido.nombre }}</h3>
+
+    <h3>Valor: {{ pedido.valor }}</h3>
+
+    <h3>Estado: {{ pedido.estado }}</h3>
+
+    <p>Nombre del registrador: {{ pedido.registro }}</p>
+
+    <p>Descripción: {{ pedido.descripcion }}</p>
+
+    
+
+
+   <a href="/pedidos/detalle/{{ pedido.id }}/">
+        Ver pedido
+    </a>
+
+    
+
+    <a href="/pedidos/editar/{{ pedido.id }}/">
+        Editar pedido
+    </a>
+
+    
+    <a href="/pedidos/eliminar/{{ pedido.id }}/">
+        Eliminar pedido
+    </a>
+ 
+    <hr>
+
+{% empty %}
+
+    <p>No hay pedidos que hallan sido registrados</p>
+
+{% endfor %}
+
+</body>
+
+</html>
+
+
+--Lo mismo aplica para las aplicacione usuarios y productos
+
+12.Vamos a ejecutar a ver como quedo el proyecto, en la misma terminal del directorio o en
+la terminal de VS(desde el command prompt) ejecutamos el siguiente comando para empezar a correr
+el servidor y de esta manera ver como quedo el proyecto:
+
+*python manage.py runserver
+
+esperemos a que nos de una direccion url que tendremos que pegar en cualquier navegador
+chrome,edge,oper,firefox y demás
+
+link que da al correr el servidor: http://127.0.0.1:8000/ (pegarlo en el buscador del navegador)
+
+saldra un menu y nos dira:
+
+1.admin/
+2.pedidos/
+
+-seguido del slash vas a poner pedidos y cierras con slash
+
+http://127.0.0.1:8000/pedidos/
+
+-seguido a el slash que va despues de pedidos ponemos el url del el metodo que implementamos
+en las views por ejemplo
+
+http://127.0.0.1:8000/pedidos/crear/ <- con esto nos redirije hacia el apartado de crear, para que podamos
+crear nuestro primero pedido
+
+======================================================================================================
+
+AHORA EXPLICARE ALGO SOBRE LOS USUARIOS simplemente se hace lo mismo solo que los views cambian y adicional no
+necesariamente se crean modelos
+
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+
+
+def iniciar_sesion(request):
+
+    if request.method == "POST":
+
+        usuario = authenticate(request,
+        username = request.POST["username"],
+        password = request.POST["password"]
+        )
+
+        if usuario is not None: <-si el usuario no tiene datos nulos, puede acceder a la lista y crear, modificar, ver o cerrar sesión
+            login(request, usuario)
+            destino = request.GET.get("next", "/productos/listar/") <- aca es donde se manda a la lista que permite ver los pedidos creados y crear nuevos pedidos y demás
+            return redirect(destino)
+
+        return render(
+            request,
+            "usuarios/login.html",
+            {"error": "Usuario o contraseña incorrectos"} <-si se detecta errores vuelve y manda a la persona a inciar sesion otra vez
+        )
+
+    return render(
+        request,
+        "usuarios/login.html", <-especificamente es la ruta en donde lo manda a volver a inicar sesion
+    )
+
+def registro(request):
+
+    if request.method == "POST":
+
+        username = request.POST["username"]
+        email = request.POST["email"]
+        password1 = request.POST["password1"]
+        password2 = request.POST["password2"]
+
+        if password1 != password2: <--verificamos que la contraseña puesta la primera vez coincidan con el segundo campo
+
+            return render(
+                request,
+                "usuarios/registro.html",
+                {"error": "Las contraseñas no coinciden"} <-- en casos de errores muestra el mensaje de que la contraseña es invalida
+            )
+
+        if User.objects.filter(username=username).exists(): <- verifica si el usuario esta existente o inexistente
+
+            return render(
+                request,
+                "usuarios/registro.html",
+                {"error": "Ese usuario ya existe"} <- en caso de que no muestra mensaje
+            )
+
+        usuario = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password1                <-si los datos son correctos y válidos
+        )
+
+        login(request, usuario)  <- indica que el usuario si se registro, y que puede inciar sesion
+
+        return redirect("/productos/crear/") <-lo mando a la lista que e spor asi decirlo la parte principal de la pagina
+
+    return render(
+        request,
+        "usuarios/registro.html"
+    )  <-datos ingresados en el registro seran enviados automaticamente a la base de datos
+
+
+def cerrar_sesion(request):
+    logout(request)
+    return redirect("/usuarios/login/") <-destruye una sesión iniciado o una cuenta que este dentro de la pagina
+
+-- luego vienen las urls auque es lo mismo que hicimos con los metodos de las views o acciones por asi decirlo
+
+creamos un archivo llamado urls.py y metemos lo siguiente dentro de ella:
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path("login/", views.iniciar_sesion),
+    path("registro/", views.registro),
+    path("logout/", views.cerrar_sesion),
+]
+
+esto para que nos redireccione hacia las diferente rutas que tenemos como iniciar sesion, registro o cerrar la sesion
+
+-- y ya como paso final se crean las plantillas de usuarios, creamos dentro de usuarios una carpeta
+llamada template luego otra dentro de esta llamada usuarios y dentro de ella los html (login.html = inicio de sesión, registro.html = registro)
+
+==================== PLANTILLA LOGIN HTML =====================
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de Sesión</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            min-height: 100%;
+            background: linear-gradient(160deg, 120a24 0%, 241046 100%);
+        }
+
+        body {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 16px;
+            font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+            color: e8e2ff;
+            line-height: 1.5;
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: 00f0ff;
+            letter-spacing: 0.02em;
+            text-shadow: 0 0 18px rgba(0, 240, 255, 0.45);
+        }
+
+        .error {
+            margin: 0 0 16px;
+            padding: 10px 16px;
+            font-size: 0.95rem;
+            color: ff8fa3;
+            background: rgba(255, 77, 109, 0.12);
+            border: 1px solid rgba(255, 77, 109, 0.5);
+            border-left: 4px solid ff4d6d;
+            border-radius: 10px;
+        }
+
+        form p {
+            margin: 0 0 10px;
+            padding: 10px 16px;
+            background: 1c1238;
+            border: 1px solid 3a2766;
+            border-left: 4px solid 00f0ff;
+            border-radius: 10px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: 00f0ff;
+            letter-spacing: 0.04em;
+        }
+
+        input {
+            display: block;
+            width: 100%;
+            margin-top: 6px;
+            padding: 10px 12px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: ffffff;
+            background: 0b0618;
+            border: 1.5px solid 3a2766;
+            border-radius: 8px;
+            caret-color: ff2e97;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: 00f0ff;
+            box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.2);
+        }
+
+        .acciones {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        button {
+            padding: 11px 26px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: inherit;
+            color: ffffff;
+            background: ff2e97;
+            border: none;
+            border-radius: 999px;
+            box-shadow: 0 4px 16px rgba(255, 46, 151, 0.4);
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            background: ff4fa9;
+            box-shadow: 0 6px 20px rgba(255, 46, 151, 0.55);
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        a {
+            display: inline-block;
+            padding: 9px 18px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: 00f0ff;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            border-radius: 999px;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s, transform 0.1s;
+        }
+
+        a:hover {
+            background: 00f0ff;
+            color: 120a24;
+        }
+
+        a:active {
+            transform: scale(0.97);
+        }
+        
+
+        @media (max-width: 520px) {
+            body {
+                padding: 28px 14px;
+            }
+
+            h1 {
+                text-align: center;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Iniciar sesión</h1>
+
+
+    <form method="POST">
+
+        {% csrf_token %} <-- hace que el formulario sea mas seguro
+
+        <p>
+            <label>Usuario:</label><br>
+
+            <input type="text" name="username" required>
+        </p>
+
+        <p>
+            <label>Contraseña:</label><br>
+
+            <input type="password" name="password" required>
+        </p>
+
+        <button type="submit">
+            Entrar
+        </button>
+
+    </form>
+
+    <br>
+
+    <a href="/usuarios/registro/">
+        No tienes cuenta
+    </a>
+
+
+</body>
+
+</html>
+
+
+=================== PLANTILLA REGISTRO HTML ================
+
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Registro</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            min-height: 100%;
+            background: linear-gradient(160deg, 120a24 0%, 241046 100%);
+        }
+
+        body {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 16px;
+            font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+            color: e8e2ff;
+            line-height: 1.5;
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: 00f0ff;
+            letter-spacing: 0.02em;
+            text-shadow: 0 0 18px rgba(0, 240, 255, 0.45);
+        }
+
+        .error {
+            margin: 0 0 16px;
+            padding: 10px 16px;
+            font-size: 0.95rem;
+            color: ff8fa3;
+            background: rgba(255, 77, 109, 0.12);
+            border: 1px solid rgba(255, 77, 109, 0.5);
+            border-left: 4px solid ff4d6d;
+            border-radius: 10px;
+        }
+
+        form p {
+            margin: 0 0 10px;
+            padding: 10px 16px;
+            background: 1c1238;
+            border: 1px solid 3a2766;
+            border-left: 4px solid 00f0ff;
+            border-radius: 10px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: 00f0ff;
+            letter-spacing: 0.04em;
+        }
+
+        input {
+            display: block;
+            width: 100%;
+            margin-top: 6px;
+            padding: 10px 12px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: ffffff;
+            background: 0b0618;
+            border: 1.5px solid 3a2766;
+            border-radius: 8px;
+            caret-color: ff2e97;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: 00f0ff;
+            box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.2);
+        }
+
+        .acciones {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        button {
+            padding: 11px 26px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: inherit;
+            color: ffffff;
+            background: ff2e97;
+            border: none;
+            border-radius: 999px;
+            box-shadow: 0 4px 16px rgba(255, 46, 151, 0.4);
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            background: ff4fa9;
+            box-shadow: 0 6px 20px rgba(255, 46, 151, 0.55);
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        a {
+            display: inline-block;
+            padding: 9px 18px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: 00f0ff;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            border-radius: 999px;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s, transform 0.1s;
+        }
+
+        a:hover {
+            background: 00f0ff;
+            color: 120a24;
+        }
+
+        a:active {
+            transform: scale(0.97);
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 28px 14px;
+            }
+
+            h1 {
+                text-align: center;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Crear cuenta</h1>
+
+    {% if error %} 
+    <p style="color: red;">    <-- Indica que si hay un error, lo ponga de color rojo
+        {{ error }}
+    </p>
+    {% endif %}
+
+    <form method="POST">
+
+        {% csrf_token %}  <-- hace que el formulario sea mas seguro
+
+        <p>
+            <label>Usuario:</label><br>
+
+            <input type="text" name="username" required>
+        </p>
+
+        <p>
+            <label>Correo:</label><br>
+
+            <input type="email" name="email" required>
+        </p>
+
+        <p>
+            <label>Contraseña:</label><br>
+
+            <input type="password" name="password1" required>
+        </p>
+
+        <p>
+            <label>Repetir contraseña:</label><br>
+
+            <input type="password" name="password2" required>
+        </p>
+
+        <button type="submit">
+            Registrarme
+        </button>
+
+    </form>
+
+    <br>
+
+    <a href="/usuarios/login/">
+        ¿Ya tienes cuenta? Inicia sesión
+    </a>
+
+</body>
+
+</html>
+
+--Ahor asi ejecutamos el comando en la terminal de VS o en cmd de el directorio:
+
+python manage.py runserver
+
+pegamos el enlace que nos da:
+
+http://127.0.0.1:8000/
+
+luego despues de el slash, colocamos el nombre de la aplicación en este caso 'usuarios':
+
+http://127.0.0.1:8000/usuarios/
+
+despues del slash de usuarios ponemos la url osea la ruta a la que va a ser dirigido que ne este caso es 'login':
+
+http://127.0.0.1:8000/usuarios/login/
+
+y con eso ya tenemos nuestro login creado junto a el apartado de pedidos.

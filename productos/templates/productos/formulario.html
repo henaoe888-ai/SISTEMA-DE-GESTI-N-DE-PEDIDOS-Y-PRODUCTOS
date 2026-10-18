@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Gestión de Productos y Pedidos</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            min-height: 100%;
+            background: linear-gradient(160deg, #120a24 0%, #241046 100%);
+        }
+
+        body {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 16px;
+            font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+            color: #e8e2ff;
+            line-height: 1.5;
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00f0ff;
+            letter-spacing: 0.02em;
+            text-shadow: 0 0 18px rgba(0, 240, 255, 0.45);
+        }
+
+        h2 {
+            margin: 0 0 16px;
+            padding: 10px 16px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ffd23f;
+            background: #1c1238;
+            border-left: 4px solid #ff2e97;
+            border-radius: 10px;
+        }
+
+        form p {
+            margin: 0 0 10px;
+            padding: 10px 16px;
+            background: #1c1238;
+            border: 1px solid #3a2766;
+            border-left: 4px solid #00f0ff;
+            border-radius: 10px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #00f0ff;
+            letter-spacing: 0.04em;
+        }
+
+        input {
+            width: 100%;
+            margin-top: 6px;
+            padding: 10px 12px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: #ffffff;
+            background: #0b0618;
+            border: 1.5px solid #3a2766;
+            border-radius: 8px;
+            caret-color: #ff2e97;
+        }
+
+        input::placeholder {
+            color: #6d5c99;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #00f0ff;
+            box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.2);
+        }
+
+        button {
+            margin-top: 12px;
+            padding: 11px 26px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: inherit;
+            color: #ffffff;
+            background: #ff2e97;
+            border: none;
+            border-radius: 999px;
+            box-shadow: 0 4px 16px rgba(255, 46, 151, 0.4);
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            background: #ff4fa9;
+            box-shadow: 0 6px 20px rgba(255, 46, 151, 0.55);
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        a {
+            display: inline-block;
+            margin: 4px 6px 4px 0;
+            padding: 7px 16px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #00f0ff;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            border-radius: 999px;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s, transform 0.1s;
+        }
+
+        a:hover {
+            background: #00f0ff;
+            color: #120a24;
+        }
+
+        a:active {
+            transform: scale(0.97);
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 28px 14px;
+            }
+
+            h1 {
+                text-align: center;
+                font-size: 1.5rem;
+            }
+        }
+</style>
+</head>
+
+<body>
+
+<h1>Gestión de Productos y Pedidos</h1>
+
+<h2>Registro de productos</h2>
+
+<form method="POST">
+
+    {% csrf_token %}
+
+    <p>
+        <label>Nombre:</label><br>
+        <input
+            type="text"
+            name="nombre"
+            value="{{ productos.nombre|default:'' }}"
+            required
+        >
+    </p>
+
+    <p>
+        <label>Descripción:</label><br>
+        <input
+            type="text"
+            name="descripcion"
+            value="{{ productos.descripcion|default:'' }}"
+            required
+        >
+    </p>
+
+    <p>
+        <label>Precio:</label><br>
+        <input
+            type="number"
+            name="precio"
+            value="{{ productos.precio|default:'' }}"
+            required
+        >
+    </p>
+
+    <p>
+        <label>Stock:</label><br>
+        <input
+            type="number"
+            name="stock"
+            value="{{ productos.stock|default:'' }}"
+            required
+        >
+    </p>
+
+    <p>
+        <label>Registro:</label><br>
+        <input
+            type="date"
+            name="registro"
+            value="{{ productos.registro|default:'' }}"
+            required
+        >
+    </p>
+
+    <button type="submit">
+        Guardar
+    </button>
+
+    <br><br>
+
+    <a href="/productos/listar/">
+        Ver productos
+
+    
+
+
+    <a href="/productos/editar/{{ productos.id }}/">
+    Editar producto 
+    </a>
+
+
+
+    
+    <br><br>
+
+</form>

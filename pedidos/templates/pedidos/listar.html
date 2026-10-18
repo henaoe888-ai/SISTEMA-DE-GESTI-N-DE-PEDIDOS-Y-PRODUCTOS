@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+     <title>Sistema de Gestión de Productos y Pedidos</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            min-height: 100%;
+            background: linear-gradient(160deg, #120a24 0%, #241046 100%);
+        }
+
+        body {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 16px;
+            font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+            color: #e8e2ff;
+            line-height: 1.5;
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00f0ff;
+            letter-spacing: 0.02em;
+            text-shadow: 0 0 18px rgba(0, 240, 255, 0.45);
+        }
+
+        h3 {
+            margin: 0 0 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ffd23f;
+        }
+
+        p {
+            margin: 0 0 8px;
+            font-size: 0.95rem;
+            color: #c9c0ee;
+        }
+
+        hr {
+            margin: 24px 0;
+            border: none;
+            border-top: 1px solid #3a2766;
+        }
+
+        .tarjeta {
+            margin: 0 0 16px;
+            padding: 16px 20px;
+            background: #1c1238;
+            border: 1px solid #3a2766;
+            border-left: 4px solid #ff2e97;
+            border-radius: 10px;
+        }
+
+        .acciones {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .acciones a {
+            margin: 0;
+        }
+
+        a {
+            display: inline-block;
+            margin: 8px 6px 4px 0;
+            padding: 7px 16px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #00f0ff;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            border-radius: 999px;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s, transform 0.1s;
+        }
+
+        a:hover {
+            background: #00f0ff;
+            color: #120a24;
+        }
+
+        a:active {
+            transform: scale(0.97);
+        }
+
+        .crear {
+            color: #ffffff;
+            background: #ff2e97;
+            border: none;
+            padding: 10px 24px;
+            box-shadow: 0 4px 16px rgba(255, 46, 151, 0.4);
+        }
+
+        .crear:hover {
+            background: #ff4fa9;
+            color: #ffffff;
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 28px 14px;
+            }
+
+            h1 {
+                text-align: center;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Lista de pedidios registrados</h1>
+
+<a href="/pedidos/crear/">
+    Crear un nuevo Pedido
+</a>
+
+<a href="/productos/crear/">
+    Ir a Productos
+</a>
+
+<a href="/usuarios/cerrar_sesion/">
+    Cerrar Sesión
+</a>
+
+<hr>
+
+{% for pedido in pedidos %}
+
+    <h3>Nombre: {{ pedido.nombre }}</h3>
+
+    <h3>Valor: {{ pedido.valor }}</h3>
+
+    <h3>Estado: {{ pedido.estado }}</h3>
+
+    <p>Nombre del registrador: {{ pedido.registro }}</p>
+
+    <p>Descripción: {{ pedido.descripcion }}</p>
+
+    
+
+
+   <a href="/pedidos/detalle/{{ pedido.id }}/">
+        Ver pedido
+    </a>
+
+    
+
+    <a href="/pedidos/editar/{{ pedido.id }}/">
+        Editar pedido
+    </a>
+
+    
+    <a href="/pedidos/eliminar/{{ pedido.id }}/">
+        Eliminar pedido
+    </a>
+ 
+    <hr>
+
+{% empty %}
+
+    <p>No hay pedidos que hallan sido registrados</p>
+
+{% endfor %}
+
+</body>
+
+</html>
